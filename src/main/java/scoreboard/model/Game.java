@@ -14,6 +14,8 @@ public class Game {
     Long number;
     Integer homeScore;
     Integer awayScore;
+    String homeTeamName;
+    String awayTeamName;
     Boolean isActive;
     LocalDateTime startedAt;
 }

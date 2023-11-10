@@ -9,7 +9,7 @@ public interface ScoreBoardService {
 
     List<Game> getActiveGames();
 
-    Game startGame(Long gameNumber);
+    Game startGame(Long gameNumber, String homeTeam, String awayTeam);
 
     void finishGame(Game game);
 }

@@ -7,9 +7,12 @@ import scoreboard.model.Game;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WorldCupScoreBoardServiceTest {
     ScoreBoardService service;
+    private static final String HOME_TEAM = "Romania";
+    private static final String AWAY_TEAM = "Austria";
 
     @BeforeEach
     void setup() {
@@ -24,16 +27,25 @@ class WorldCupScoreBoardServiceTest {
 
     @Test
     public void testAddOneGame() {
-        service.startGame(500L);
+        service.startGame(500L, HOME_TEAM, AWAY_TEAM);
         List<Game> gameList = service.getActiveGames();
         assertEquals(1, gameList.size());
     }
 
     @Test
+    public void testAddGameTwice() {
+        service.startGame(500L, HOME_TEAM, AWAY_TEAM);
+
+        assertThrows(RuntimeException.class, () -> {
+            service.startGame(500L, HOME_TEAM, AWAY_TEAM);
+        });
+    }
+
+    @Test
     public void testStartGamesAndFinishGame() {
-        Game game1 = service.startGame(1500L);
-        Game game2 = service.startGame(2500L);
-        Game game3 = service.startGame(3500L);
+        Game game1 = service.startGame(1500L, HOME_TEAM, AWAY_TEAM);
+        Game game2 = service.startGame(2500L, HOME_TEAM, AWAY_TEAM);
+        Game game3 = service.startGame(3500L, HOME_TEAM, AWAY_TEAM);
 
         service.finishGame(game3);
         List<Game> gameList = service.getActiveGames();
@@ -51,11 +63,11 @@ class WorldCupScoreBoardServiceTest {
 
     @Test
     public void testMostRecentSorting() throws InterruptedException {
-        service.startGame(1500L);
+        service.startGame(1500L, HOME_TEAM, AWAY_TEAM);
         Thread.sleep(100);
-        service.startGame(2500L);
+        service.startGame(2500L, HOME_TEAM, AWAY_TEAM);
         Thread.sleep(100);
-        service.startGame(3500L);
+        service.startGame(3500L, HOME_TEAM, AWAY_TEAM);
 
         List<Game> gameList = service.getActiveGames();
 
@@ -64,4 +76,48 @@ class WorldCupScoreBoardServiceTest {
         assertEquals(1500L, gameList.get(2).getNumber());
     }
 
+    @Test
+    public void testUpdateGames() {
+        service.startGame(1500L, "Mexico", "Canada");
+        service.updateGame(1500L, 0, 5);
+
+        List<Game> gameList = service.getActiveGames();
+
+        assertEquals(5, gameList.get(0).getAwayScore());
+
+        service.updateGame(1500L, 6, 12);
+        assertEquals(12, gameList.get(0).getAwayScore());
+
+    }
+
+    @Test
+    public void testExample() throws InterruptedException {
+        service.startGame(1500L, "Mexico", "Canada");
+        Thread.sleep(100);
+        service.updateGame(1500L, 0, 5);
+
+        service.startGame(2500L, "Spain", "Brazil");
+        Thread.sleep(100);
+        service.updateGame(2500L, 10, 2);
+
+        service.startGame(3500L, "Germany", "France");
+        Thread.sleep(100);
+        service.updateGame(3500L, 2, 2);
+
+        service.startGame(4500L, "Uruguay", "Italy");
+        Thread.sleep(100);
+        service.updateGame(4500L, 6, 6);
+
+        service.startGame(5500L, "Argentina", "Australia");
+        Thread.sleep(100);
+        service.updateGame(5500L, 3, 1);
+
+        List<Game> gameList = service.getActiveGames();
+
+        assertEquals(4500L, gameList.get(0).getNumber());
+        assertEquals(2500L, gameList.get(1).getNumber());
+        assertEquals(1500L, gameList.get(2).getNumber());
+        assertEquals(5500L, gameList.get(3).getNumber());
+        assertEquals(3500L, gameList.get(4).getNumber());
+    }
 }
