@@ -11,6 +11,9 @@ import java.util.Comparator;
 import java.util.List;
 
 public class WorldCupScoreBoardService implements ScoreBoardService {
+    public static final String GAME_WITH_SAME_NUMBER_ALREADY_EXISTS = "Game with same number already exists:";
+    public static final String GAME_CANNOT_BE_FOUND = "Game cannot be found:";
+    public static final String GAME_IS_ALREADY_INACTIVE = "Game is already inactive:";
     private final List<Game> games = new ArrayList<>();
 
     /**
@@ -25,7 +28,7 @@ public class WorldCupScoreBoardService implements ScoreBoardService {
     public Game startGame(Long gameNumber, String homeTeam, String awayTeam) {
         for (Game game : games) {
             if (gameNumber.equals(game.getNumber()))
-                throw new GameAlreadyExistsException("Game with same number already exists:" + game.getNumber());
+                throw new GameAlreadyExistsException(GAME_WITH_SAME_NUMBER_ALREADY_EXISTS + game.getNumber());
         }
         Game game = new Game(gameNumber, 0, 0, homeTeam, awayTeam, true, LocalDateTime.now());
         games.add(game);
@@ -41,8 +44,8 @@ public class WorldCupScoreBoardService implements ScoreBoardService {
      */
     @Override
     public void finishGame(Game game) {
-        if (!games.contains(game)) throw new GameNotFoundException("Game cannot be found:" + game.getNumber());
-        if (!game.getIsActive()) throw new InactiveGameException("Game is already inactive:" + game.getNumber());
+        if (!games.contains(game)) throw new GameNotFoundException(GAME_CANNOT_BE_FOUND + game.getNumber());
+        if (!game.getIsActive()) throw new InactiveGameException(GAME_IS_ALREADY_INACTIVE + game.getNumber());
         game.setIsActive(false);
     }
 

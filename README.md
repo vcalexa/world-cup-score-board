@@ -40,6 +40,23 @@ directly.
 
 4. An example usage is provided with comments in the Example class inside the test package
 5. Test coverage is 100% class, 88% method and 94% line coverage
+6. In this implementation, the decision has been made to keep the `getActiveGames()` method within
+   the `WorldCupScoreBoardService` class, rather than extracting it into a separate service class. Below are the reasons
+   behind this design choice:
+
+7. The `getActiveGames()` method is tightly related to the responsibilities of the `WorldCupScoreBoardService`. It
+   directly leverages the internal state of the service, accessing the `games` list. Placing it in the same class
+   ensures a cohesive and streamlined implementation.
+
+8. Being part of the same class allows the method direct access to the `games` list. This direct access simplifies the
+   implementation and enhances performance by avoiding unnecessary method calls or additional layers of abstraction.
+
+9. Maintaining the method within the `WorldCupScoreBoardService` contributes to code simplicity. There's no need to
+   introduce an additional service class for a single method, keeping the overall structure clear and straightforward.
+
+10. While the Single Responsibility Principle (SRP) suggests separating concerns, the decision here prioritizes
+    simplicity and direct access to the required state. The application's specific requirements and the desire to keep
+    the implementation straightforward played a crucial role in this design choice.
 
 #### Using the source code
 
