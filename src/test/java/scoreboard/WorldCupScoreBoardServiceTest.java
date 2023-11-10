@@ -2,8 +2,11 @@ package scoreboard;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import scoreboard.exception.GameNotFoundException;
+import scoreboard.exception.InactiveGameException;
 import scoreboard.model.Game;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -91,7 +94,7 @@ class WorldCupScoreBoardServiceTest {
     }
 
     @Test
-    public void testExample() throws InterruptedException {
+    public void testGivenExample() throws InterruptedException {
         service.startGame(1500L, "Mexico", "Canada");
         Thread.sleep(100);
         service.updateGame(1500L, 0, 5);
@@ -119,5 +122,20 @@ class WorldCupScoreBoardServiceTest {
         assertEquals(1500L, gameList.get(2).getNumber());
         assertEquals(5500L, gameList.get(3).getNumber());
         assertEquals(3500L, gameList.get(4).getNumber());
+    }
+
+    @Test
+    public void testFinishNonExistingGame() {
+        assertThrows(GameNotFoundException.class, () -> {
+            Game game = new Game(1L, 0, 0, "TeamA", "TeamB", true, LocalDateTime.now());
+            service.finishGame(game);
+        });
+    }
+
+    @Test
+    public void testFinishExistingGameTwice() {
+        Game game = service.startGame(1L, "TeamA", "TeamB");
+        service.finishGame(game);
+        assertThrows(InactiveGameException.class, () -> service.finishGame(game));
     }
 }

@@ -1,49 +1,74 @@
 package scoreboard;
 
+import scoreboard.exception.GameAlreadyExistsException;
+import scoreboard.exception.GameNotFoundException;
+import scoreboard.exception.InactiveGameException;
 import scoreboard.model.Game;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class WorldCupScoreBoardService implements ScoreBoardService {
-    private Clock clock = Clock.systemDefaultZone();
-
-    public void setClock(Clock clock) {
-        this.clock = clock;
-    }
-
     private final List<Game> games = new ArrayList<>();
 
+    /**
+     * Starts a new game with the specified game number, home team, and away team.
+     *
+     * @param gameNumber The number of the new game.
+     * @param homeTeam   The name of the home team.
+     * @param awayTeam   The name of the away team.
+     * @return The newly started game.
+     */
     @Override
     public Game startGame(Long gameNumber, String homeTeam, String awayTeam) {
         for (Game game : games) {
             if (gameNumber.equals(game.getNumber()))
-                throw new RuntimeException("Game with same number already exists.");
+                throw new GameAlreadyExistsException("Game with same number already exists:" + game.getNumber());
         }
         Game game = new Game(gameNumber, 0, 0, homeTeam, awayTeam, true, LocalDateTime.now());
         games.add(game);
         return game;
     }
 
+    /**
+     * Finishes the specified game.
+     *
+     * @param game The game to be finished.
+     * @throws GameNotFoundException If the specified game is not found in the list.
+     * @throws InactiveGameException If the specified game is already inactive.
+     */
     @Override
     public void finishGame(Game game) {
+        if (!games.contains(game)) throw new GameNotFoundException("Game cannot be found:" + game.getNumber());
+        if (!game.getIsActive()) throw new InactiveGameException("Game is already inactive:" + game.getNumber());
         game.setIsActive(false);
     }
 
+    /**
+     * Updates the scores for a specified game.
+     *
+     * @param gameNumber The number of the game to be updated.
+     * @param homeScore  The new home team score.
+     * @param awayScore  The new away team score.
+     */
     @Override
-    public void updateGame(Long gameNumber, Integer homeScore, Integer AwayScore) {
+    public void updateGame(Long gameNumber, Integer homeScore, Integer awayScore) {
         games.stream()
                 .filter(game -> game.getNumber().equals(gameNumber))
                 .findFirst()
                 .ifPresent(game -> {
                     game.setHomeScore(homeScore);
-                    game.setAwayScore(AwayScore);
+                    game.setAwayScore(awayScore);
                 });
     }
 
+    /**
+     * Retrieves a list of active games, sorted by the total score and most recent start time.
+     *
+     * @return A list of active games, sorted by the total score and most recent start time.
+     */
     @Override
     public List<Game> getActiveGames() {
         return games.stream()
