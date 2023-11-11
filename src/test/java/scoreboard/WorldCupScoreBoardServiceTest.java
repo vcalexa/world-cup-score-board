@@ -96,23 +96,23 @@ class WorldCupScoreBoardServiceTest {
     @Test
     public void testGivenExample() throws InterruptedException {
         service.startGame(1500L, "Mexico", "Canada");
-        Thread.sleep(100);
+        Thread.sleep(50);
         service.updateGame(1500L, 0, 5);
 
         service.startGame(2500L, "Spain", "Brazil");
-        Thread.sleep(100);
+        Thread.sleep(50);
         service.updateGame(2500L, 10, 2);
 
         service.startGame(3500L, "Germany", "France");
-        Thread.sleep(100);
+        Thread.sleep(50);
         service.updateGame(3500L, 2, 2);
 
         service.startGame(4500L, "Uruguay", "Italy");
-        Thread.sleep(100);
+        Thread.sleep(50);
         service.updateGame(4500L, 6, 6);
 
         service.startGame(5500L, "Argentina", "Australia");
-        Thread.sleep(100);
+        Thread.sleep(50);
         service.updateGame(5500L, 3, 1);
 
         List<Game> gameList = service.getActiveGames();
