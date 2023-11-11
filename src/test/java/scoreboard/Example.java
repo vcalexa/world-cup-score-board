@@ -14,8 +14,8 @@ public class Example {
         Game game2 = scoreboardService.startGame(2L, "HomeTeamB", "AwayTeamB");
 
         // Update the score
-        scoreboardService.updateGame(game1.getNumber(), 2, 1);
-        scoreboardService.updateGame(game1.getNumber(), 5, 0);
+        scoreboardService.updateGameScore(game1.getNumber(), 2, 1);
+        scoreboardService.updateGameScore(game1.getNumber(), 5, 0);
 
         // Finish the match
         scoreboardService.finishGame(game1);

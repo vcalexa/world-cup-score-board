@@ -48,15 +48,15 @@ build the maven project
 #### Design Decisions
 
 1. The library uses an in-memory storage solution for simplicity. The state of ongoing matches is stored in a
-   synchronized
-   List to insure thread safety.
-2. Used Thread.sleep in tests to avoid same values for LocalDateNow.now() values
+   ConcurrentHashMap to insure thread safety.
+2. It is assumed that a score can be updated to a smaller value, due to revoked goals(eg after VAR) so no validation
+   will be made in this direction
+2. Used Thread.sleep() in tests to avoid same values for LocalDateNow.now() values
    instead of using Clock for simplicity
 3. In this implementation, the decision has been made to keep the `getActiveGames()` method within
    the `WorldCupScoreBoardService` class, rather than extracting it into a separate service class.
 4. The `getActiveGames()` method is tightly related to the responsibilities of the `WorldCupScoreBoardService`. It
    directly leverages the internal state of the service, accessing the `games` list.
 5. While the Single Responsibility Principle (SRP) suggests separating concerns, the decision here prioritizes
-   simplicity and direct access to the required state. The application's specific requirements and the desire to keep
-   the implementation straightforward played a crucial role in this design choice.
+   simplicity and direct access to the required state.
 

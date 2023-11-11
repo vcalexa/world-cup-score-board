@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class Game {
-    Long number;
-    Integer homeScore;
-    Integer awayScore;
+    long number;
+    int homeScore;
+    int awayScore;
     String homeTeamName;
     String awayTeamName;
-    Boolean isActive;
+    boolean isActive;
     LocalDateTime startedAt;
 }

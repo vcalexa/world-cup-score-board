@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import scoreboard.exception.GameNotFoundException;
 import scoreboard.exception.InactiveGameException;
+import scoreboard.exception.InvalidTeamNameException;
 import scoreboard.model.Game;
 
 import java.time.LocalDateTime;
@@ -82,46 +83,15 @@ class WorldCupScoreBoardServiceTest {
     @Test
     public void testUpdateGames() {
         service.startGame(1500L, "Mexico", "Canada");
-        service.updateGame(1500L, 0, 5);
+        service.updateGameScore(1500L, 0, 5);
 
         List<Game> gameList = service.getActiveGames();
 
         assertEquals(5, gameList.get(0).getAwayScore());
 
-        service.updateGame(1500L, 6, 12);
+        service.updateGameScore(1500L, 6, 12);
         assertEquals(12, gameList.get(0).getAwayScore());
 
-    }
-
-    @Test
-    public void testGivenExample() throws InterruptedException {
-        service.startGame(1500L, "Mexico", "Canada");
-        Thread.sleep(50);
-        service.updateGame(1500L, 0, 5);
-
-        service.startGame(2500L, "Spain", "Brazil");
-        Thread.sleep(50);
-        service.updateGame(2500L, 10, 2);
-
-        service.startGame(3500L, "Germany", "France");
-        Thread.sleep(50);
-        service.updateGame(3500L, 2, 2);
-
-        service.startGame(4500L, "Uruguay", "Italy");
-        Thread.sleep(50);
-        service.updateGame(4500L, 6, 6);
-
-        service.startGame(5500L, "Argentina", "Australia");
-        Thread.sleep(50);
-        service.updateGame(5500L, 3, 1);
-
-        List<Game> gameList = service.getActiveGames();
-
-        assertEquals(4500L, gameList.get(0).getNumber());
-        assertEquals(2500L, gameList.get(1).getNumber());
-        assertEquals(1500L, gameList.get(2).getNumber());
-        assertEquals(5500L, gameList.get(3).getNumber());
-        assertEquals(3500L, gameList.get(4).getNumber());
     }
 
     @Test
@@ -137,5 +107,75 @@ class WorldCupScoreBoardServiceTest {
         Game game = service.startGame(1L, "TeamA", "TeamB");
         service.finishGame(game);
         assertThrows(InactiveGameException.class, () -> service.finishGame(game));
+    }
+
+    @Test
+    public void testStartGameWithNullTeams() {
+        assertThrows(InvalidTeamNameException.class, () -> {
+            service.startGame(1L, null, null);
+        });
+    }
+
+    @Test
+    public void testUpdateScoresWithNegativeValues() {
+        Game game = service.startGame(1L, "TeamA", "TeamB");
+
+        assertThrows(NegativeScoreException.class, () -> {
+            service.updateGameScore(game.getNumber(), -1, 2);
+        });
+
+        assertThrows(NegativeScoreException.class, () -> {
+            service.updateGameScore(game.getNumber(), 1, -2);
+        });
+
+        assertThrows(NegativeScoreException.class, () -> {
+            service.updateGameScore(game.getNumber(), -1, -2);
+        });
+
+        // Check that the scores are not updated
+        assertEquals(0, game.getHomeScore());
+        assertEquals(0, game.getAwayScore());
+    }
+
+    @Test
+    void testUpdateFinishedGame() {
+        long gameNumber = 123L;
+        Game game = service.startGame(gameNumber, "TeamA", "TeamB");
+        service.finishGame(game);
+
+        assertThrows(InactiveGameException.class, () -> {
+            service.updateGameScore(gameNumber, 1, 2);
+        });
+    }
+
+    @Test
+    public void testGivenExample() throws InterruptedException {
+        service.startGame(1500L, "Mexico", "Canada");
+        Thread.sleep(50);
+        service.updateGameScore(1500L, 0, 5);
+
+        service.startGame(2500L, "Spain", "Brazil");
+        Thread.sleep(50);
+        service.updateGameScore(2500L, 10, 2);
+
+        service.startGame(3500L, "Germany", "France");
+        Thread.sleep(50);
+        service.updateGameScore(3500L, 2, 2);
+
+        service.startGame(4500L, "Uruguay", "Italy");
+        Thread.sleep(50);
+        service.updateGameScore(4500L, 6, 6);
+
+        service.startGame(5500L, "Argentina", "Australia");
+        Thread.sleep(50);
+        service.updateGameScore(5500L, 3, 1);
+
+        List<Game> gameList = service.getActiveGames();
+
+        assertEquals(4500L, gameList.get(0).getNumber());
+        assertEquals(2500L, gameList.get(1).getNumber());
+        assertEquals(1500L, gameList.get(2).getNumber());
+        assertEquals(5500L, gameList.get(3).getNumber());
+        assertEquals(3500L, gameList.get(4).getNumber());
     }
 }

@@ -5,11 +5,11 @@ import scoreboard.model.Game;
 import java.util.List;
 
 public interface ScoreBoardService {
-    void updateGame(Long gameNumber, Integer homeScore, Integer AwayScore);
+    void updateGameScore(long gameNumber, int homeScore, int AwayScore);
 
     List<Game> getActiveGames();
 
-    Game startGame(Long gameNumber, String homeTeam, String awayTeam);
+    Game startGame(long gameNumber, String homeTeam, String awayTeam);
 
     void finishGame(Game game);
 }

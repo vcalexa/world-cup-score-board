@@ -3,20 +3,22 @@ package scoreboard;
 import scoreboard.exception.GameAlreadyExistsException;
 import scoreboard.exception.GameNotFoundException;
 import scoreboard.exception.InactiveGameException;
+import scoreboard.exception.InvalidTeamNameException;
 import scoreboard.model.Game;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static java.util.Collections.synchronizedList;
+import static scoreboard.validation.GameValidator.*;
 
 public class WorldCupScoreBoardService implements ScoreBoardService {
-    public static final String GAME_WITH_SAME_NUMBER_ALREADY_EXISTS = "Game with same number already exists:";
     public static final String GAME_CANNOT_BE_FOUND = "Game cannot be found:";
     public static final String GAME_IS_ALREADY_INACTIVE = "Game is already inactive:";
-    private final List<Game> games = synchronizedList(new ArrayList<>());
+
+    private final Map<Long, Game> games = new ConcurrentHashMap<>();
 
     /**
      * Starts a new game with the specified game number, home team, and away team.
@@ -25,17 +27,18 @@ public class WorldCupScoreBoardService implements ScoreBoardService {
      * @param homeTeam   The name of the home team.
      * @param awayTeam   The name of the away team.
      * @return The newly started game.
+     * @throws InvalidTeamNameException   If either team name is empty or null.
+     * @throws GameAlreadyExistsException If the there already exists an active game with same number.
      */
     @Override
-    public Game startGame(Long gameNumber, String homeTeam, String awayTeam) {
-        synchronized (games) {
-            for (Game game : games) {
-                if (gameNumber.equals(game.getNumber()))
-                    throw new GameAlreadyExistsException(GAME_WITH_SAME_NUMBER_ALREADY_EXISTS + game.getNumber());
-            }
-        }
+    public Game startGame(long gameNumber, String homeTeam, String awayTeam) {
+        validateGameNumber(gameNumber);
+        validateTeamNames(homeTeam, awayTeam);
+        validateGameAlreadyExists(gameNumber, games);
+
         Game game = new Game(gameNumber, 0, 0, homeTeam, awayTeam, true, LocalDateTime.now());
-        games.add(game);
+        games.put(gameNumber, game);
+
         return game;
     }
 
@@ -48,11 +51,7 @@ public class WorldCupScoreBoardService implements ScoreBoardService {
      */
     @Override
     public void finishGame(Game game) {
-        synchronized (games) {
-            if (!games.contains(game)) throw new GameNotFoundException(GAME_CANNOT_BE_FOUND + game.getNumber());
-            if (!game.getIsActive()) throw new InactiveGameException(GAME_IS_ALREADY_INACTIVE + game.getNumber());
-            game.setIsActive(false);
-        }
+        updateGame(game.getNumber(), game.getHomeScore(), game.getAwayScore(), false);
     }
 
     /**
@@ -61,19 +60,16 @@ public class WorldCupScoreBoardService implements ScoreBoardService {
      * @param gameNumber The number of the game to be updated.
      * @param homeScore  The new home team score.
      * @param awayScore  The new away team score.
+     * @throws NegativeScoreException If either score is negative.
+     * @throws GameNotFoundException  If the specified game is not found in the list.
+     * @throws InactiveGameException  If the specified game is already inactive.
      */
     @Override
-    public void updateGame(Long gameNumber, Integer homeScore, Integer awayScore) {
-        synchronized (games) {
-            games.stream()
-                    .filter(game -> game.getNumber().equals(gameNumber))
-                    .findFirst()
-                    .ifPresent(game -> {
-                        game.setHomeScore(homeScore);
-                        game.setAwayScore(awayScore);
-                    });
-        }
+    public void updateGameScore(long gameNumber, int homeScore, int awayScore) {
+        validateScores(homeScore, awayScore);
+        updateGame(gameNumber, homeScore, awayScore, true);
     }
+
 
     /**
      * Retrieves a list of active games, sorted by the total score and most recent start time.
@@ -82,14 +78,30 @@ public class WorldCupScoreBoardService implements ScoreBoardService {
      */
     @Override
     public List<Game> getActiveGames() {
-        synchronized (games) {
-            return games.stream()
-                    .filter(Game::getIsActive)
-                    .sorted(
-                            Comparator.comparing((Game game) -> game.getHomeScore() + game.getAwayScore()
-                                    ).reversed()
-                                    .thenComparing(Comparator.comparing(Game::getStartedAt).reversed()))
-                    .toList();
-        }
+        return games.values().stream()
+                .filter(Game::isActive)
+                .sorted(Comparator.comparing((Game game) -> game.getHomeScore() + game.getAwayScore())
+                        .reversed().thenComparing(Comparator.comparing(Game::getStartedAt).reversed()))
+                .toList();
+    }
+
+    private void updateGame(long gameNumber, int homeScore, int awayScore, boolean active) {
+        games.compute(gameNumber, (key, existingGame) -> {
+            if (existingGame != null) {
+                if (existingGame.isActive()) {
+                    existingGame.setHomeScore(homeScore);
+                    existingGame.setAwayScore(awayScore);
+                    if (!active) {
+                        existingGame.setActive(false);
+                    }
+                } else {
+                    throw new InactiveGameException(GAME_IS_ALREADY_INACTIVE + existingGame.getNumber());
+                }
+                return existingGame;
+            } else {
+                throw new GameNotFoundException(GAME_CANNOT_BE_FOUND + gameNumber);
+            }
+        });
     }
 }
+
