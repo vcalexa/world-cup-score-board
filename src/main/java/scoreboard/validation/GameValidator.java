@@ -1,8 +1,9 @@
 package scoreboard.validation;
 
-import scoreboard.NegativeScoreException;
 import scoreboard.exception.GameAlreadyExistsException;
 import scoreboard.exception.InvalidTeamNameException;
+import scoreboard.exception.NegativeScoreException;
+import scoreboard.exception.TeamNameAlreadyInUseException;
 import scoreboard.model.Game;
 
 import java.util.Map;
@@ -34,5 +35,16 @@ public class GameValidator {
         if (games.containsKey(gameNumber)) {
             throw new GameAlreadyExistsException("Game with the same number already exists: " + gameNumber);
         }
+    }
+
+    public static void validateTeamNamesNotInUse(String homeTeam, String awayTeam, Map<Long, Game> games) {
+        if (isTeamNameInUse(homeTeam, games) || isTeamNameInUse(awayTeam, games)) {
+            throw new TeamNameAlreadyInUseException("A game cannot start with a team name that is already part of an active game.");
+        }
+    }
+
+    private static boolean isTeamNameInUse(String teamName, Map<Long, Game> games) {
+        return games.values().stream()
+                .anyMatch(game -> game.isActive() && (teamName.equals(game.getHomeTeamName()) || teamName.equals(game.getAwayTeamName())));
     }
 }

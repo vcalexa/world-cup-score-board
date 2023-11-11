@@ -2,21 +2,22 @@ package scoreboard;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import scoreboard.exception.GameNotFoundException;
-import scoreboard.exception.InactiveGameException;
-import scoreboard.exception.InvalidTeamNameException;
+import scoreboard.exception.*;
 import scoreboard.model.Game;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class WorldCupScoreBoardServiceTest {
     ScoreBoardService service;
     private static final String HOME_TEAM = "Romania";
     private static final String AWAY_TEAM = "Austria";
+    private static final String HOME_TEAM2 = "China";
+    private static final String AWAY_TEAM2 = "Russia";
+    private static final String HOME_TEAM3 = "Usa";
+    private static final String AWAY_TEAM3 = "India";
 
     @BeforeEach
     void setup() {
@@ -40,16 +41,14 @@ class WorldCupScoreBoardServiceTest {
     public void testAddGameTwice() {
         service.startGame(500L, HOME_TEAM, AWAY_TEAM);
 
-        assertThrows(RuntimeException.class, () -> {
-            service.startGame(500L, HOME_TEAM, AWAY_TEAM);
-        });
+        assertThrows(RuntimeException.class, () -> service.startGame(500L, HOME_TEAM, AWAY_TEAM));
     }
 
     @Test
     public void testStartGamesAndFinishGame() {
         Game game1 = service.startGame(1500L, HOME_TEAM, AWAY_TEAM);
-        Game game2 = service.startGame(2500L, HOME_TEAM, AWAY_TEAM);
-        Game game3 = service.startGame(3500L, HOME_TEAM, AWAY_TEAM);
+        Game game2 = service.startGame(2500L, HOME_TEAM2, AWAY_TEAM2);
+        Game game3 = service.startGame(3500L, HOME_TEAM3, AWAY_TEAM3);
 
         service.finishGame(game3);
         List<Game> gameList = service.getActiveGames();
@@ -69,9 +68,9 @@ class WorldCupScoreBoardServiceTest {
     public void testMostRecentSorting() throws InterruptedException {
         service.startGame(1500L, HOME_TEAM, AWAY_TEAM);
         Thread.sleep(100);
-        service.startGame(2500L, HOME_TEAM, AWAY_TEAM);
+        service.startGame(2500L, HOME_TEAM2, AWAY_TEAM2);
         Thread.sleep(100);
-        service.startGame(3500L, HOME_TEAM, AWAY_TEAM);
+        service.startGame(3500L, HOME_TEAM3, AWAY_TEAM3);
 
         List<Game> gameList = service.getActiveGames();
 
@@ -111,26 +110,18 @@ class WorldCupScoreBoardServiceTest {
 
     @Test
     public void testStartGameWithNullTeams() {
-        assertThrows(InvalidTeamNameException.class, () -> {
-            service.startGame(1L, null, null);
-        });
+        assertThrows(InvalidTeamNameException.class, () -> service.startGame(1L, null, null));
     }
 
     @Test
     public void testUpdateScoresWithNegativeValues() {
         Game game = service.startGame(1L, "TeamA", "TeamB");
 
-        assertThrows(NegativeScoreException.class, () -> {
-            service.updateGameScore(game.getNumber(), -1, 2);
-        });
+        assertThrows(NegativeScoreException.class, () -> service.updateGameScore(game.getNumber(), -1, 2));
 
-        assertThrows(NegativeScoreException.class, () -> {
-            service.updateGameScore(game.getNumber(), 1, -2);
-        });
+        assertThrows(NegativeScoreException.class, () -> service.updateGameScore(game.getNumber(), 1, -2));
 
-        assertThrows(NegativeScoreException.class, () -> {
-            service.updateGameScore(game.getNumber(), -1, -2);
-        });
+        assertThrows(NegativeScoreException.class, () -> service.updateGameScore(game.getNumber(), -1, -2));
 
         // Check that the scores are not updated
         assertEquals(0, game.getHomeScore());
@@ -143,8 +134,19 @@ class WorldCupScoreBoardServiceTest {
         Game game = service.startGame(gameNumber, "TeamA", "TeamB");
         service.finishGame(game);
 
-        assertThrows(InactiveGameException.class, () -> {
-            service.updateGameScore(gameNumber, 1, 2);
+        assertThrows(InactiveGameException.class, () -> service.updateGameScore(gameNumber, 1, 2));
+    }
+
+    @Test
+    public void testStartGameWithDuplicateTeamNames() {
+        service.startGame(1L, HOME_TEAM, AWAY_TEAM);
+
+        assertThrows(TeamNameAlreadyInUseException.class, () -> service.startGame(2L, HOME_TEAM, "AnotherTeam"));
+
+        assertThrows(TeamNameAlreadyInUseException.class, () -> service.startGame(3L, "AnotherTeam", AWAY_TEAM));
+
+        assertDoesNotThrow(() -> {
+            service.startGame(4L, "UniqueTeam1", "UniqueTeam2");
         });
     }
 

@@ -1,10 +1,8 @@
 package scoreboard;
 
-import scoreboard.exception.GameAlreadyExistsException;
-import scoreboard.exception.GameNotFoundException;
-import scoreboard.exception.InactiveGameException;
-import scoreboard.exception.InvalidTeamNameException;
+import scoreboard.exception.*;
 import scoreboard.model.Game;
+import scoreboard.validation.GameValidator;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -35,6 +33,7 @@ public class WorldCupScoreBoardService implements ScoreBoardService {
         validateGameNumber(gameNumber);
         validateTeamNames(homeTeam, awayTeam);
         validateGameAlreadyExists(gameNumber, games);
+        GameValidator.validateTeamNamesNotInUse(homeTeam, awayTeam, games);
 
         Game game = new Game(gameNumber, 0, 0, homeTeam, awayTeam, true, LocalDateTime.now());
         games.put(gameNumber, game);

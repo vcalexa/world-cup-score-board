@@ -15,7 +15,7 @@ public class Example {
 
         // Update the score
         scoreboardService.updateGameScore(game1.getNumber(), 2, 1);
-        scoreboardService.updateGameScore(game1.getNumber(), 5, 0);
+        scoreboardService.updateGameScore(game2.getNumber(), 5, 0);
 
         // Finish the match
         scoreboardService.finishGame(game1);
